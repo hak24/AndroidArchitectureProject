@@ -1,5 +1,6 @@
 package com.example.androidarchitectureproject.presentation.detail
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -22,10 +23,10 @@ import com.example.androidarchitectureproject.util.ImageLoadingUtil
 @Composable
 fun ImageDetailScreen(
     viewModel: ImageDetailViewModel = hiltViewModel(),
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onImageClick: (String, String?) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
-
 
     Scaffold(
         topBar = {
@@ -99,6 +100,11 @@ fun ImageDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
+                                .clickable {
+                                    state.image?.let { image ->
+                                        onImageClick(image.regularUrl, image.description)
+                                    }
+                                }
                         )
                         Column(
                             modifier = Modifier

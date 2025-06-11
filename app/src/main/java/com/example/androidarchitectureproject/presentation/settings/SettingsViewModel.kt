@@ -1,14 +1,13 @@
 package com.example.androidarchitectureproject.presentation.settings
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import com.example.androidarchitectureproject.data.worker.ImageSyncWorker
+import com.example.androidarchitectureproject.domain.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
@@ -16,41 +15,44 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val workManager: WorkManager
-) : ViewModel() {
+    application: Application,
+    private val settingsRepository: SettingsRepository
+) : AndroidViewModel(application) {
 
-    private val _state = MutableStateFlow(SettingsState())
-    val state: StateFlow<SettingsState> = _state.asStateFlow()
+    private val workManager = WorkManager.getInstance(getApplication())
 
-    init {
-        loadSettings()
-    }
-
-    private fun loadSettings() {
-        // In a real app, you would load these from SharedPreferences or DataStore
-        _state.update { 
-            it.copy(
-                syncEnabled = true,
-                syncInterval = 15 // Default to 15 minutes
+    val state: StateFlow<SettingsState> = settingsRepository.getSettings()
+        .map { settings ->
+            SettingsState(
+                syncEnabled = settings.syncEnabled,
+                syncInterval = settings.syncInterval
             )
         }
-    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = SettingsState()
+        )
 
     fun toggleSync(enabled: Boolean) {
-        Timber.d("Toggling sync: $enabled")
-        _state.update { it.copy(syncEnabled = enabled) }
-        if (enabled) {
-            scheduleSyncWork()
-        } else {
-            cancelSyncWork()
+        viewModelScope.launch {
+            Timber.d("Toggling sync: $enabled")
+            settingsRepository.updateSyncEnabled(enabled)
+            if (enabled) {
+                scheduleSyncWork()
+            } else {
+                cancelSyncWork()
+            }
         }
     }
 
     fun setSyncInterval(minutes: Int) {
-        Timber.d("Setting sync interval to $minutes minutes")
-        _state.update { it.copy(syncInterval = minutes) }
-        if (state.value.syncEnabled) {
-            scheduleSyncWork()
+        viewModelScope.launch {
+            Timber.d("Setting sync interval to $minutes minutes")
+            settingsRepository.updateSyncInterval(minutes)
+            if (state.value.syncEnabled) {
+                scheduleSyncWork()
+            }
         }
     }
 
@@ -110,5 +112,5 @@ class SettingsViewModel @Inject constructor(
 
 data class SettingsState(
     val syncEnabled: Boolean = false,
-    val syncInterval: Int = 15 // Default to 15 minutes
+    val syncInterval: Int = 15
 ) 

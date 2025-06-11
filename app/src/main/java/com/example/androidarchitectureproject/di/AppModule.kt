@@ -9,7 +9,9 @@ import com.example.androidarchitectureproject.data.local.ImageDao
 import com.example.androidarchitectureproject.data.local.ImageDatabase
 import com.example.androidarchitectureproject.data.remote.UnsplashApi
 import com.example.androidarchitectureproject.data.repository.ImageRepositoryImpl
+import com.example.androidarchitectureproject.data.repository.SettingsRepositoryImpl
 import com.example.androidarchitectureproject.domain.repository.ImageRepository
+import com.example.androidarchitectureproject.domain.repository.SettingsRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,6 +57,14 @@ object AppModule {
         dao: ImageDao
     ): ImageRepository {
         return ImageRepositoryImpl(api, dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(
+        @ApplicationContext context: Context
+    ): SettingsRepository {
+        return SettingsRepositoryImpl(context)
     }
 
     @Provides
