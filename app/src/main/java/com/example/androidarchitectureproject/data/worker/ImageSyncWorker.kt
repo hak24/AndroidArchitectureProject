@@ -5,13 +5,13 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import coil.ImageLoader
+import coil.request.ImageRequest
 import com.example.androidarchitectureproject.di.IODispatcherAnnotation
 import com.example.androidarchitectureproject.domain.repository.ImageRepository
 import com.example.androidarchitectureproject.util.ImageLoadingUtil
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -22,13 +22,10 @@ class ImageSyncWorker @AssistedInject constructor(
     private val repository: ImageRepository,
     private val imageLoader: ImageLoader,
     @IODispatcherAnnotation private val ioDispatcher: CoroutineDispatcher
-) : CoroutineWorker(appContext, workerParams) {
+) : CoroutineWorker(appContext, workerParams), ImageRequest.Listener {
 
     override suspend fun doWork(): Result = withContext(ioDispatcher) {
         try {
-            Timber.d("Starting image sync work")
-            repository.fetchImages(1)
-            Timber.d("Fetched new images from API")
 
             // Get non-downloaded images
             val nonDownloadedImages = repository.getNonDownloadedImages()
@@ -37,14 +34,22 @@ class ImageSyncWorker @AssistedInject constructor(
             nonDownloadedImages.forEach { image ->
                 try {
                     Timber.d("Caching full resolution image: ${image.id}")
-                    val request = ImageLoadingUtil.createImageRequest(
+                    val requestRegularUrl = ImageLoadingUtil.createImageRequest(
                         context = applicationContext,
                         url = image.regularUrl,
-                        forceDiskCache = true
+                        forceDiskCache = true,
+                        listener = this@ImageSyncWorker
                     )
 
-                    imageLoader.execute(request)
-                    // Mark image as downloaded after successful caching
+                    imageLoader.execute(requestRegularUrl)
+                    val requestThumbUrl = ImageLoadingUtil.createImageRequest(
+                        context = applicationContext,
+                        url = image.thumbUrl,
+                        forceDiskCache = true,
+                        listener = this@ImageSyncWorker
+                    )
+
+                    imageLoader.execute(requestThumbUrl)
                     repository.markImageAsDownloaded(image.id)
                     Timber.d("Successfully cached and marked as downloaded: ${image.id}")
                 } catch (e: Exception) {

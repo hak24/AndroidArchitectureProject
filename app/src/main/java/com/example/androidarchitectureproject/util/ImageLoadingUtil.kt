@@ -8,13 +8,15 @@ object ImageLoadingUtil {
     fun createImageRequest(
         context: Context,
         url: String,
-        forceDiskCache: Boolean = false
+        forceDiskCache: Boolean = false,
+        listener: ImageRequest.Listener? = null
     ): ImageRequest {
         return ImageRequest.Builder(context)
             .data(url)
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCachePolicy(if (forceDiskCache) CachePolicy.DISABLED else CachePolicy.ENABLED)
             .crossfade(true)
+            .listener(listener)
             .build()
     }
 } 

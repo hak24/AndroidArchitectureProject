@@ -5,6 +5,7 @@ import androidx.compose.foundation.gestures.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Rotate90DegreesCcw
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -80,14 +81,14 @@ fun InteractiveImageScreen(
                     .pointerInput(Unit) {
                         detectTransformGestures { centroid, pan, zoom, rotate ->
                             scale = (scale * zoom).coerceIn(0.5f, 5f)
-                            
+
                             // Apply rotation based on the current rotation state
                             val angleRad = rotation * PI / 180
                             val cos = cos(angleRad).toFloat()
                             val sin = sin(angleRad).toFloat()
                             val rotatedPanX = pan.x * cos - pan.y * sin
                             val rotatedPanY = pan.x * sin + pan.y * cos
-                            
+
                             offset = Offset(
                                 x = offset.x + rotatedPanX,
                                 y = offset.y + rotatedPanY
@@ -108,17 +109,17 @@ fun InteractiveImageScreen(
             AnimatedVisibility(
                 visible = scale > 1f || rotation != 0f || offset != Offset.Zero,
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 16.dp)
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp)
             ) {
-                Button(
+                FloatingActionButton(
                     onClick = {
                         scale = 1f
                         rotation = 0f
                         offset = Offset.Zero
                     }
                 ) {
-                    Text("Reset")
+                    Icon(imageVector = Icons.AutoMirrored.Default.Undo, contentDescription = "Reset position")
                 }
             }
         }

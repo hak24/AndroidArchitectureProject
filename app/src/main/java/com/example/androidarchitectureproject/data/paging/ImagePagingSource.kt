@@ -8,6 +8,7 @@ import com.example.androidarchitectureproject.data.remote.UnsplashApi
 import com.example.androidarchitectureproject.domain.model.Image
 import kotlinx.coroutines.flow.first
 import retrofit2.HttpException
+import timber.log.Timber
 import java.io.IOException
 
 class ImagePagingSource(
@@ -18,8 +19,8 @@ class ImagePagingSource(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Image> {
         return try {
             val page = params.key ?: 1
+            Timber.d("load called for page: $page")
             
-            // First try to load from local database
             val localImages = dao.getAllImages().first().map { entity ->
                 Image(
                     id = entity.id,

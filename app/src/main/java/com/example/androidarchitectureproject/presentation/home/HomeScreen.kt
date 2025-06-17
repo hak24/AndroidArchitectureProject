@@ -41,9 +41,11 @@ fun HomeScreen(
             title = { Text("Image Splasher", textAlign = TextAlign.Center) },
         )
     }) { innerPadding ->
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             when (lazyPagingItems.loadState.refresh) {
                 is LoadState.Loading -> {
                     CircularProgressIndicator(
